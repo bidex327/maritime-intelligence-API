@@ -2,17 +2,16 @@ import AisObservation from "../models/aisObservationModel.js";
 import Vessel from "../models/vesselModel.js";
 
 const createAisObservation = async (observationData) => {
-  if (observationData.vessel) {
-    const vessel = await Vessel.findById(observationData.vessel);
+  const vessel = await Vessel.findOne({
+    mmsiNumber: observationData.mmsiNumber,
+  });
 
-    if (!vessel) {
-      const error = new Error("Referenced vessel not found");
-      error.name = "VesselNotFoundError";
-      throw error;
-    }
-  }
+  const observationToCreate = {
+    ...observationData,
+    vessel: vessel ? vessel._id : undefined,
+  };
 
-  const observation = await AisObservation.create(observationData);
+  const observation = await AisObservation.create(observationToCreate);
 
   return observation;
 };
