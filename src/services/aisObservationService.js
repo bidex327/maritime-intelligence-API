@@ -40,10 +40,20 @@ const getVesselMovementHistory = async (vesselId) => {
 
   return observations;
 };
+const getLatestAisObservation = async (vesselId) => {
+  const observation = await AisObservation.findOne({
+    vessel: vesselId,
+  })
+    .populate("vessel")
+    .sort({ observedAt: -1 });
+
+  return observation;
+};
 
 export {
   createAisObservation,
   getAllAisObservations,
   getAisObservationById,
-  getVesselMovementHistory
+  getVesselMovementHistory,
+  getLatestAisObservation
 };

@@ -2,7 +2,8 @@ import {
   createAisObservation,
   getAllAisObservations,
   getAisObservationById,
-  getVesselMovementHistory
+  getVesselMovementHistory,
+  getLatestAisObservation
 } from "../services/aisObservationService.js";
 
 const createAisObservationController = async (req, res) => {
@@ -106,9 +107,39 @@ const getVesselMovementHistoryController = async (req, res) => {
   }
 };
 
+const getLatestAisObservationController = async (req, res) => {
+  try {
+    const observation = await getLatestAisObservation(req.params.vesselId);
+
+    if (!observation) {
+      return res.status(404).json({
+        message: "No AIS observation found for this vessel",
+      });
+    }
+
+    res.status(200).json({
+      message: "Latest AIS observation retrieved successfully",
+      data: observation,
+    });
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        message: "Invalid vessel ID",
+      });
+    }
+
+    console.error("Get latest AIS observation error:", error);
+
+    res.status(500).json({
+      message: "Failed to retrieve latest AIS observation",
+    });
+  }
+};
+
 export {
   createAisObservationController,
   getAllAisObservationsController,
   getAisObservationByIdController,
-  getVesselMovementHistoryController
+  getVesselMovementHistoryController,
+  getLatestAisObservationController
 };
