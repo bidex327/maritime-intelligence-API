@@ -6,6 +6,7 @@ import aisAnomalyRoutes from "./routes/aisAnomalyRoutes.js"
 import aisSignalGapRoutes from "./routes/aisSignalGapRoutes.js"
 import aisHeadingAnomalyRoutes from "./routes/aisHeadingAnomalyRoutes.js"
 import aisRouteDeviationRoutes from "./routes/aisRouteDeviationRoutes.js";
+import aisAnomalySummaryRoutes from "./routes/aisAnomalySummaryRoutes.js"
 
 const app = express();
 app.use(cors());
@@ -16,6 +17,7 @@ app.use("/api/ais-anomalies", aisAnomalyRoutes)
 app.use("/api/ais-anomalies", aisSignalGapRoutes)
 app.use("/api/ais-anomalies", aisHeadingAnomalyRoutes)
 app.use("/api/ais-anomalies", aisRouteDeviationRoutes)
+app.use("/api/ais-anomalies", aisAnomalySummaryRoutes)
 app.get("/", (req, res) => {
   res.send("Maritime-intelligence API is running");
 });
