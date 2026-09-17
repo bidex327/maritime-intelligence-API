@@ -2,6 +2,7 @@ import {
   createAisObservation,
   getAllAisObservations,
   getAisObservationById,
+  getVesselMovementHistory
 } from "../services/aisObservationService.js";
 
 const createAisObservationController = async (req, res) => {
@@ -82,8 +83,32 @@ const getAisObservationByIdController = async (req, res) => {
   }
 };
 
+const getVesselMovementHistoryController = async (req, res) => {
+  try {
+    const observations = await getVesselMovementHistory(req.params.vesselId);
+
+    res.status(200).json({
+      message: "Vessel movement history retrieved successfully",
+      data: observations,
+    });
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        message: "Invalid vessel ID",
+      });
+    }
+
+    console.error("Get vessel movement history error:", error);
+
+    res.status(500).json({
+      message: "Failed to retrieve vessel movement history",
+    });
+  }
+};
+
 export {
   createAisObservationController,
   getAllAisObservationsController,
   getAisObservationByIdController,
+  getVesselMovementHistoryController
 };
