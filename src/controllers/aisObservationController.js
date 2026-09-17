@@ -3,7 +3,8 @@ import {
   getAllAisObservations,
   getAisObservationById,
   getVesselMovementHistory,
-  getLatestAisObservation
+  getLatestAisObservation,
+  getRecentAisObservations
 } from "../services/aisObservationService.js";
 
 const createAisObservationController = async (req, res) => {
@@ -136,10 +137,62 @@ const getLatestAisObservationController = async (req, res) => {
   }
 };
 
+const getRecentAisObservationsController = async (req, res) => {
+  try {
+    const { vesselId } = req.params;
+    const { from, to } = req.query;
+
+   if (!from || !to) {
+  return res.status(400).json({
+    message: "Both from and to dates are required",
+  });
+}
+
+const fromDate = new Date(from);
+const toDate = new Date(to);
+
+if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+  return res.status(400).json({
+    message: "Invalid date format",
+  });
+}
+
+if (fromDate > toDate) {
+  return res.status(400).json({
+    message: "The from date cannot be later than the to date",
+  });
+}
+
+    const observations = await getRecentAisObservations(
+  vesselId,
+  fromDate,
+  toDate
+);
+
+    res.status(200).json({
+      message: "Recent AIS observations retrieved successfully",
+      data: observations,
+    });
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        message: "Invalid vessel ID or date",
+      });
+    }
+
+    console.error("Get recent AIS observations error:", error);
+
+    res.status(500).json({
+      message: "Failed to retrieve recent AIS observations",
+    });
+  }
+};
+
 export {
   createAisObservationController,
   getAllAisObservationsController,
   getAisObservationByIdController,
   getVesselMovementHistoryController,
-  getLatestAisObservationController
+  getLatestAisObservationController,
+  getRecentAisObservationsController
 };
