@@ -2,7 +2,8 @@ import {
   createAiDetection,
   getAllAiDetections,
   getAiDetectionById,
-  getAiDetectionsByType
+  getAiDetectionsByType,
+  getAiDetectionsBySource
 } from "../services/aiDetectionService.js";
 
 const createAiDetectionController = async (req, res) => {
@@ -105,9 +106,31 @@ const getAiDetectionsByTypeController = async (req, res) => {
   }
 };
 
+const getAiDetectionsBySourceController = async (req, res) => {
+  try {
+    const { source } = req.params;
+   
+
+    const aiDetections = await getAiDetectionsBySource(source);
+
+    res.status(200).json({
+      message: "AI detections retrieved successfully",
+      count: aiDetections.length,
+      data: aiDetections,
+    });
+  } catch (error) {
+    console.error("AI detection source retrieval error:", error);
+
+    res.status(500).json({
+      message: "Failed to retrieve AI detections",
+    });
+  }
+};
+
 export {
   createAiDetectionController,
   getAllAiDetectionsController,
   getAiDetectionByIdController,
-  getAiDetectionsByTypeController
+  getAiDetectionsByTypeController,
+  getAiDetectionsBySourceController
 };

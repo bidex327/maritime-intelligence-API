@@ -29,9 +29,20 @@ const getAiDetectionsByType = async (detectionType) => {
 
   return aiDetections;
 };
+
+const getAiDetectionsBySource = async (source) => {
+  const aiDetections = await AiDetection.find({
+    source,
+  }).sort({
+    detectedAt: -1,
+  });
+
+  return aiDetections;
+};
 export {
   createAiDetection,
   getAllAiDetections,
   getAiDetectionById,
-  getAiDetectionsByType
+  getAiDetectionsByType,
+  getAiDetectionsBySource
 };
