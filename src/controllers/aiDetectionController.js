@@ -3,7 +3,8 @@ import {
   getAllAiDetections,
   getAiDetectionById,
   getAiDetectionsByType,
-  getAiDetectionsBySource
+  getAiDetectionsBySource,
+  getAiDetectionsByConfidence,
 } from "../services/aiDetectionService.js";
 
 const createAiDetectionController = async (req, res) => {
@@ -22,7 +23,7 @@ const createAiDetectionController = async (req, res) => {
           Object.entries(error.errors).map(([field, detail]) => [
             field,
             detail.message,
-          ])
+          ]),
         ),
       });
     }
@@ -88,8 +89,6 @@ const getAiDetectionsByTypeController = async (req, res) => {
   try {
     const { detectionType } = req.params;
 
-  
-
     const aiDetections = await getAiDetectionsByType(detectionType);
 
     res.status(200).json({
@@ -109,7 +108,6 @@ const getAiDetectionsByTypeController = async (req, res) => {
 const getAiDetectionsBySourceController = async (req, res) => {
   try {
     const { source } = req.params;
-   
 
     const aiDetections = await getAiDetectionsBySource(source);
 
@@ -127,10 +125,50 @@ const getAiDetectionsBySourceController = async (req, res) => {
   }
 };
 
+const getAiDetectionsByConfidenceController = async (req, res) => {
+  try {
+    const { min } = req.query;
+    if (min === undefined) {
+      return res.status(400).json({
+        message: "Minimum confidence is required",
+      });
+    }
+
+    const minimumConfidence = Number(min);
+
+    if (!Number.isFinite(minimumConfidence)) {
+      return res.status(400).json({
+        message: "Minimum confidence must be a valid number",
+      });
+    }
+
+    if (minimumConfidence < 0 || minimumConfidence > 1) {
+      return res.status(400).json({
+        message: "Minimum confidence must be between 0 and 1",
+      });
+    }
+
+    const aiDetections = await getAiDetectionsByConfidence(minimumConfidence);
+
+    res.status(200).json({
+      message: "AI detections retrieved successfully",
+      count: aiDetections.length,
+      data: aiDetections,
+    });
+  } catch (error) {
+    console.error("AI detection confidence retrieval error:", error);
+
+    res.status(500).json({
+      message: "Failed to retrieve AI detections",
+    });
+  }
+};
+
 export {
   createAiDetectionController,
   getAllAiDetectionsController,
   getAiDetectionByIdController,
   getAiDetectionsByTypeController,
-  getAiDetectionsBySourceController
+  getAiDetectionsBySourceController,
+  getAiDetectionsByConfidenceController,
 };

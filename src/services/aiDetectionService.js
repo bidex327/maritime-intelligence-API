@@ -39,10 +39,23 @@ const getAiDetectionsBySource = async (source) => {
 
   return aiDetections;
 };
+const getAiDetectionsByConfidence = async (minimumConfidence) => {
+  const aiDetections = await AiDetection.find({
+    confidence: {
+      $gte: minimumConfidence,
+    },
+  }).sort({
+    confidence: -1,
+    detectedAt: -1,
+  });
+
+  return aiDetections;
+};
 export {
   createAiDetection,
   getAllAiDetections,
   getAiDetectionById,
   getAiDetectionsByType,
-  getAiDetectionsBySource
+  getAiDetectionsBySource,
+  getAiDetectionsByConfidence,
 };
