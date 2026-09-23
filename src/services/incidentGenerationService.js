@@ -3,6 +3,7 @@ import { evaluateSignalGapRule } from "./ruleEvaluationService.js";
 import { calculateSeverity } from "./severityService.js";
 import { createIncident } from "./incidentService.js";
 import AisObservation from "../models/aisObservationModel.js";
+import { generateAlertFromIncident } from "./alertGenerationService.js";
 
 const generateIncidentFromSignalGap = async (vesselId) => {
   // 1. Detect AIS signal gap
@@ -59,12 +60,16 @@ const generateIncidentFromSignalGap = async (vesselId) => {
     },
     detectedAt: signalGapResult.data.latestObservedAt,
   });
+  const alertResult = await generateAlertFromIncident(incident._id);
 
-  return {
-    created: true,
-    message: "Incident generated successfully",
-    data: incident,
-  };
+return {
+  created: true,
+  message: "Incident and alert generated successfully",
+  data: {
+    incident,
+    alert: alertResult,
+  },
+};
 };
 
 export { generateIncidentFromSignalGap };
