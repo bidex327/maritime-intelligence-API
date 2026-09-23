@@ -10,7 +10,9 @@ import aisAnomalySummaryRoutes from "./routes/aisAnomalySummaryRoutes.js";
 import aisDetectionRoutes from "./routes/aiDetectionRoutes.js";
 import aiAisCorrelationRoutes from "./routes/aiAisCorrelationRoutes.js";
 import ruleRoutes from "./routes/ruleRoute.js";
-import incidentRoutes from "./routes/incidentRoutes.js"
+import incidentRoutes from "./routes/incidentRoutes.js";
+import alertRoutes from "./routes/alertRoutes.js"
+
 
 const app = express();
 app.use(cors());
@@ -25,7 +27,8 @@ app.use("/api/ais-anomalies", aisAnomalySummaryRoutes);
 app.use("/api/ai-detections", aisDetectionRoutes);
 app.use("/api/ai-ais-correlations", aiAisCorrelationRoutes);
 app.use("/api/rules", ruleRoutes);
-app.use("/api/incidents", incidentRoutes)
+app.use("/api/incidents", incidentRoutes);
+app.use("/api/alerts", alertRoutes)
 app.get("/", (req, res) => {
   res.send("Maritime-intelligence API is running");
 });
