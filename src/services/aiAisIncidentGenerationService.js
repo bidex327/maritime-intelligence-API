@@ -7,7 +7,7 @@ import { generateAlertFromIncident } from "./alertGenerationService.js";
 
 const generateIncidentFromAiAisCorrelation = async (correlationId) => {
   try {
-    // 1. Find the AI-AIS correlation
+  
     const correlation = await AiAisCorrelation.findById(correlationId);
 
     if (!correlation) {
@@ -18,7 +18,7 @@ const generateIncidentFromAiAisCorrelation = async (correlationId) => {
       };
     }
 
-    // 2. Prevent duplicate incidents for the same correlation
+ 
     const existingIncident = await Incident.findOne({
       "evidence.correlationId": correlation._id,
     });
@@ -31,7 +31,7 @@ const generateIncidentFromAiAisCorrelation = async (correlationId) => {
       };
     }
 
-    // 3. Evaluate the configured AI-AIS rule
+    
     const ruleResult = await evaluateAiAisCorrelationRule({
       matchScore: correlation.matchScore,
     });
@@ -44,10 +44,10 @@ const generateIncidentFromAiAisCorrelation = async (correlationId) => {
       };
     }
 
-    // 4. Calculate incident severity from the rule
+
     const severityResult = calculateSeverity(ruleResult.rule);
 
-    // 5. Create the incident
+ 
     const incident = await Incident.create({
       title: "AI-AIS Correlation Detected",
       description:
@@ -69,7 +69,6 @@ const generateIncidentFromAiAisCorrelation = async (correlationId) => {
       detectedAt: correlation.correlatedAt,
     });
 
-    // 6. Generate an alert for the incident
     const alertResult = await generateAlertFromIncident(incident._id);
 
     return {

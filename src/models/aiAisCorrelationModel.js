@@ -53,8 +53,7 @@ const aiAisCorrelationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Prevent the same AI detection from being
-// correlated with the same AIS observation more than once.
+
 aiAisCorrelationSchema.index(
   { aiDetection: 1, aisObservation: 1 },
   { unique: true }
