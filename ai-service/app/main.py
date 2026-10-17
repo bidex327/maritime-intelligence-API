@@ -107,10 +107,16 @@ async def detect_objects(file: UploadFile = File(...)):
     image_bytes = await file.read()
 
     if not image_bytes:
-        raise HTTPException(status_code=400, detail="The uploaded image is empty.")
+        raise HTTPException(
+            status_code=400,
+            detail="The uploaded image is empty.",
+        )
 
     if len(image_bytes) > MAX_IMAGE_BYTES:
-        raise HTTPException(status_code=413, detail="Image size must not exceed 10 MB.")
+        raise HTTPException(
+            status_code=413,
+            detail="Image size must not exceed 10 MB.",
+        )
 
     image_array = np.frombuffer(image_bytes, dtype=np.uint8)
     image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
@@ -127,7 +133,10 @@ async def detect_objects(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail="Object detection failed.") from exc
+        raise HTTPException(
+            status_code=500,
+            detail="Object detection failed.",
+        ) from exc
 
     return {
         "success": True,
@@ -152,27 +161,39 @@ async def detect_video(file: UploadFile = File(...)):
             detail="Unsupported video format. Upload an MP4, MOV, or AVI file.",
         )
 
-    video_bytes = await file.read()
-
-    if not video_bytes:
-        raise HTTPException(status_code=400, detail="The uploaded video is empty.")
-
-    if len(video_bytes) > MAX_VIDEO_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail="Video size must not exceed 100 MB.",
-        )
-
     temp_path = None
     capture = None
+    total_bytes = 0
 
     try:
+        # Stream the upload to disk instead of loading the entire video into RAM.
         with tempfile.NamedTemporaryFile(
             suffix=extension,
             delete=False,
         ) as temp_file:
-            temp_file.write(video_bytes)
             temp_path = temp_file.name
+
+            while True:
+                chunk = await file.read(1024 * 1024)
+
+                if not chunk:
+                    break
+
+                total_bytes += len(chunk)
+
+                if total_bytes > MAX_VIDEO_BYTES:
+                    raise HTTPException(
+                        status_code=413,
+                        detail="Video size must not exceed 100 MB.",
+                    )
+
+                temp_file.write(chunk)
+
+        if total_bytes == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="The uploaded video is empty.",
+            )
 
         capture = cv2.VideoCapture(temp_path)
 
@@ -185,7 +206,12 @@ async def detect_video(file: UploadFile = File(...)):
         fps = capture.get(cv2.CAP_PROP_FPS)
         total_video_frames = capture.get(cv2.CAP_PROP_FRAME_COUNT)
 
-        if not fps or fps <= 0 or not total_video_frames or total_video_frames <= 0:
+        if (
+            not fps
+            or fps <= 0
+            or not total_video_frames
+            or total_video_frames <= 0
+        ):
             raise HTTPException(
                 status_code=400,
                 detail="The video duration could not be determined.",
@@ -202,7 +228,9 @@ async def detect_video(file: UploadFile = File(...)):
         detector = get_model()
         frame_results = []
         total_detections = 0
-        interval_frames = max(1, round(fps * FRAME_INTERVAL_SECONDS))
+        interval_frames = max(
+            1, round(fps * FRAME_INTERVAL_SECONDS)
+        )
         frame_index = 0
 
         while True:
@@ -263,3 +291,5 @@ async def detect_video(file: UploadFile = File(...)):
 
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
+
+        await file.close()
