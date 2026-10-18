@@ -94,7 +94,6 @@ def health_check():
         "model": MODEL_NAME,
         "classes": list(detector.names.values()),
     }
-
 @app.post("/detect")
 async def detect_objects(file: UploadFile = File(...)):
     if not file.content_type or not file.content_type.startswith("image/"):
@@ -103,32 +102,32 @@ async def detect_objects(file: UploadFile = File(...)):
             detail="Please upload a valid image file.",
         )
 
-image_chunks = []
-total_bytes = 0
+    image_chunks = []
+    total_bytes = 0
 
-while True:
-    chunk = await file.read(1024 * 1024)
+    while True:
+        chunk = await file.read(1024 * 1024)
 
-    if not chunk:
-        break
+        if not chunk:
+            break
 
-    total_bytes += len(chunk)
+        total_bytes += len(chunk)
 
-    if total_bytes > MAX_IMAGE_BYTES:
+        if total_bytes > MAX_IMAGE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail="Image size must not exceed 10 MB.",
+            )
+
+        image_chunks.append(chunk)
+
+    if total_bytes == 0:
         raise HTTPException(
-            status_code=413,
-            detail="Image size must not exceed 10 MB.",
+            status_code=400,
+            detail="The uploaded image is empty.",
         )
 
-    image_chunks.append(chunk)
-
-if total_bytes == 0:
-    raise HTTPException(
-        status_code=400,
-        detail="The uploaded image is empty.",
-    )
-
-image_bytes = b"".join(image_chunks)
+    image_bytes = b"".join(image_chunks)
     image_array = np.frombuffer(image_bytes, dtype=np.uint8)
     image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
 
@@ -137,6 +136,8 @@ image_bytes = b"".join(image_chunks)
             status_code=400,
             detail="The uploaded file could not be decoded as an image.",
         )
+
+    # Keep the existing detection and response logic here.
 
     try:
         detector = get_model()
