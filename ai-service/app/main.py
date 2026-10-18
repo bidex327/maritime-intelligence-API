@@ -1,8 +1,6 @@
-
 from pathlib import Path
 import os
 import tempfile
-
 import cv2
 import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -14,8 +12,6 @@ app = FastAPI(
     description="AI inference service for image and video vessel detection.",
     version="0.2.0",
 )
-
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,8 +26,8 @@ MODEL_NAME = "vessel_poc_best.pt"
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 MAX_VIDEO_BYTES = 100 * 1024 * 1024
-MAX_VIDEO_SECONDS = 10
-FRAME_INTERVAL_SECONDS = 2.0
+MAX_VIDEO_SECONDS = 30
+FRAME_INTERVAL_SECONDS = 1.0
 
 ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi"}
 
@@ -90,13 +86,14 @@ def detect_frame(detector, frame):
 
 @app.get("/health")
 def health_check():
+    detector = get_model()
+
     return {
         "status": "ok",
         "service": "maritime-intelligence-ai",
         "model": MODEL_NAME,
-        "classes": ["Container", "Sampan", "Tanker", "Tugboat", "Yacht"],
+        "classes": list(detector.names.values()),
     }
-
 
 @app.post("/detect")
 async def detect_objects(file: UploadFile = File(...)):
@@ -106,20 +103,32 @@ async def detect_objects(file: UploadFile = File(...)):
             detail="Please upload a valid image file.",
         )
 
-    image_bytes = await file.read()
+image_chunks = []
+total_bytes = 0
 
-    if not image_bytes:
-        raise HTTPException(
-            status_code=400,
-            detail="The uploaded image is empty.",
-        )
+while True:
+    chunk = await file.read(1024 * 1024)
 
-    if len(image_bytes) > MAX_IMAGE_BYTES:
+    if not chunk:
+        break
+
+    total_bytes += len(chunk)
+
+    if total_bytes > MAX_IMAGE_BYTES:
         raise HTTPException(
             status_code=413,
             detail="Image size must not exceed 10 MB.",
         )
 
+    image_chunks.append(chunk)
+
+if total_bytes == 0:
+    raise HTTPException(
+        status_code=400,
+        detail="The uploaded image is empty.",
+    )
+
+image_bytes = b"".join(image_chunks)
     image_array = np.frombuffer(image_bytes, dtype=np.uint8)
     image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
 
